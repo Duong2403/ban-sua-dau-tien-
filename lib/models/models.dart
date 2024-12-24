@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+/// Represents a pass in the system
 class Pass {
   final String id;
   final String passType;
@@ -16,27 +19,54 @@ class Pass {
   });
 
   factory Pass.fromFirestore(Map<String, dynamic> data, String id) {
-    return Pass(
-      id: id,
-      passType: data['passType'] ?? '',
-      startTime: (data['startTime'] as Timestamp).toDate(),
-      endTime: (data['endTime'] as Timestamp).toDate(),
-      status: data['status'] ?? '',
-      userId: data['userId'] ?? '',
-    );
+    try {
+      return Pass(
+        id: id,
+        passType: data['passType'] as String? ?? '',
+        startTime:
+            (data['startTime'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        endTime: (data['endTime'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        status: data['status'] as String? ?? '',
+        userId: data['userId'] as String? ?? '',
+      );
+    } catch (e) {
+      throw FirebaseException(
+        plugin: 'cloud_firestore',
+        message: 'Error converting Pass from Firestore: $e',
+      );
+    }
   }
 
   Map<String, dynamic> toMap() {
     return {
       'passType': passType,
-      'startTime': startTime,
-      'endTime': endTime,
+      'startTime': Timestamp.fromDate(startTime),
+      'endTime': Timestamp.fromDate(endTime),
       'status': status,
       'userId': userId,
     };
   }
+
+  /// Creates a copy of Pass with optional new values
+  Pass copyWith({
+    String? passType,
+    DateTime? startTime,
+    DateTime? endTime,
+    String? status,
+    String? userId,
+  }) {
+    return Pass(
+      id: id,
+      passType: passType ?? this.passType,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      status: status ?? this.status,
+      userId: userId ?? this.userId,
+    );
+  }
 }
 
+/// Represents an excusal in the system
 class Excusal {
   final String id;
   final String type;
@@ -57,15 +87,23 @@ class Excusal {
   });
 
   factory Excusal.fromFirestore(Map<String, dynamic> data, String id) {
-    return Excusal(
-      id: id,
-      type: data['type'] ?? '',
-      reason: data['reason'] ?? '',
-      days: List<String>.from(data['days'] ?? []),
-      startDate: (data['startDate'] as Timestamp).toDate(),
-      endDate: (data['endDate'] as Timestamp).toDate(),
-      userId: data['userId'] ?? '',
-    );
+    try {
+      return Excusal(
+        id: id,
+        type: data['type'] as String? ?? '',
+        reason: data['reason'] as String? ?? '',
+        days: List<String>.from(data['days'] ?? []),
+        startDate:
+            (data['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        endDate: (data['endDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        userId: data['userId'] as String? ?? '',
+      );
+    } catch (e) {
+      throw FirebaseException(
+        plugin: 'cloud_firestore',
+        message: 'Error converting Excusal from Firestore: $e',
+      );
+    }
   }
 
   Map<String, dynamic> toMap() {
@@ -73,13 +111,33 @@ class Excusal {
       'type': type,
       'reason': reason,
       'days': days,
-      'startDate': startDate,
-      'endDate': endDate,
+      'startDate': Timestamp.fromDate(startDate),
+      'endDate': Timestamp.fromDate(endDate),
       'userId': userId,
     };
   }
+
+  Excusal copyWith({
+    String? type,
+    String? reason,
+    List<String>? days,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? userId,
+  }) {
+    return Excusal(
+      id: id,
+      type: type ?? this.type,
+      reason: reason ?? this.reason,
+      days: days ?? List.from(this.days),
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      userId: userId ?? this.userId,
+    );
+  }
 }
 
+/// Represents a metric/grade in the system
 class Metric {
   final String id;
   final String event;
@@ -96,25 +154,48 @@ class Metric {
   });
 
   factory Metric.fromFirestore(Map<String, dynamic> data, String id) {
-    return Metric(
-      id: id,
-      event: data['event'] ?? '',
-      grade: (data['grade'] ?? 0).toDouble(),
-      date: (data['date'] as Timestamp).toDate(),
-      userId: data['userId'] ?? '',
-    );
+    try {
+      return Metric(
+        id: id,
+        event: data['event'] as String? ?? '',
+        grade: (data['grade'] as num?)?.toDouble() ?? 0.0,
+        date: (data['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        userId: data['userId'] as String? ?? '',
+      );
+    } catch (e) {
+      throw FirebaseException(
+        plugin: 'cloud_firestore',
+        message: 'Error converting Metric from Firestore: $e',
+      );
+    }
   }
 
   Map<String, dynamic> toMap() {
     return {
       'event': event,
       'grade': grade,
-      'date': date,
+      'date': Timestamp.fromDate(date),
       'userId': userId,
     };
   }
+
+  Metric copyWith({
+    String? event,
+    double? grade,
+    DateTime? date,
+    String? userId,
+  }) {
+    return Metric(
+      id: id,
+      event: event ?? this.event,
+      grade: grade ?? this.grade,
+      date: date ?? this.date,
+      userId: userId ?? this.userId,
+    );
+  }
 }
 
+/// Represents a user profile in the system
 class UserProfile {
   final String id;
   final String name;
@@ -135,15 +216,22 @@ class UserProfile {
   });
 
   factory UserProfile.fromFirestore(Map<String, dynamic> data, String id) {
-    return UserProfile(
-      id: id,
-      name: data['name'] ?? '',
-      email: data['email'] ?? '',
-      phone: data['phone'] ?? '',
-      unit: data['unit'] ?? '',
-      room: data['room'] ?? '',
-      squadron: data['squadron'] ?? '',
-    );
+    try {
+      return UserProfile(
+        id: id,
+        name: data['name'] as String? ?? '',
+        email: data['email'] as String? ?? '',
+        phone: data['phone'] as String? ?? '',
+        unit: data['unit'] as String? ?? '',
+        room: data['room'] as String? ?? '',
+        squadron: data['squadron'] as String? ?? '',
+      );
+    } catch (e) {
+      throw FirebaseException(
+        plugin: 'cloud_firestore',
+        message: 'Error converting UserProfile from Firestore: $e',
+      );
+    }
   }
 
   Map<String, dynamic> toMap() {
@@ -155,5 +243,24 @@ class UserProfile {
       'room': room,
       'squadron': squadron,
     };
+  }
+
+  UserProfile copyWith({
+    String? name,
+    String? email,
+    String? phone,
+    String? unit,
+    String? room,
+    String? squadron,
+  }) {
+    return UserProfile(
+      id: id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      unit: unit ?? this.unit,
+      room: room ?? this.room,
+      squadron: squadron ?? this.squadron,
+    );
   }
 }

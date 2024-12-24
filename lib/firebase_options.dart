@@ -60,4 +60,5 @@ class DefaultFirebaseOptions {
     authDomain: 'falconnet-6c1ed.firebaseapp.com',
     storageBucket: 'falconnet-6c1ed.firebasestorage.app',
   );
+
 }

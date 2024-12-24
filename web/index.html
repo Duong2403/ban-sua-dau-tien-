@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="FalconNet Web Application">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="FalconNet">
+  
+  <!-- Google Sign In Client ID -->
+  <meta name="google-signin-client_id" content="303885748047-5m2qrqs7qqj5bt56pauqaegqbqdgoo7h.apps.googleusercontent.com">
+  
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>FalconNet</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Firebase Core -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxQqg0TScpE0GEgkDG3IPEuqw5u6k9QAE",
+      authDomain: "falconnet-6c1ed.firebaseapp.com",
+      projectId: "falconnet-6c1ed",
+      storageBucket: "falconnet-6c1ed.firebasestorage.app",
+      messagingSenderId: "303885748047",
+      appId: "1:303885748047:web:e87e1e15c7f5f7da5a273a"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <script src="flutter.js" defer></script>
+</head>
+<body>
+  <script>
+    window.addEventListener('load', function(ev) {
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: null,
+        },
+        onEntrypointLoaded: function(engineInitializer) {
+          engineInitializer.initializeEngine().then(function(appRunner) {
+            appRunner.runApp();
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

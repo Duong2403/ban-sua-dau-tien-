@@ -1,37 +1,73 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // Ensure you have this file for Firebase configuration
-
+import 'package:provider/provider.dart';
+import 'firebase_options.dart';
+import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/excusals_screen.dart';
 import 'screens/metrics_screen.dart';
 import 'screens/profile_screen.dart';
+import 'providers/auth_provider.dart';
 
 void main() async {
-  // Ensure Firebase is initialized before the app starts
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('Firebase Initialized Successfully');
+  } catch (e) {
+    print('Error Initializing Firebase: $e');
+  }
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AppAuthProvider()),
+      ],
+      child: const MyApp(),
+    ),
   );
-  runApp(const AcademyApp());
 }
 
-class AcademyApp extends StatelessWidget {
-  const AcademyApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Academy Management',
+      title: 'Academy Manager',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        useMaterial3: true,
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.blue,
           foregroundColor: Colors.white,
+          elevation: 0,
         ),
       ),
-      home: const MainNavigator(), // Set the MainNavigator as the default home
+      home: Consumer<AppAuthProvider>(
+        builder: (context, authProvider, _) {
+          if (authProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (authProvider.user != null) {
+            return const MainNavigator();
+          }
+
+          return const LoginScreen();
+        },
+      ),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const MainNavigator(),
+      },
     );
   }
 }
@@ -55,34 +91,50 @@ class _MainNavigatorState extends State<MainNavigator> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex], // Display the current screen
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
+    return WillPopScope(
+      onWillPop: () async {
+        if (_currentIndex != 0) {
           setState(() {
-            _currentIndex = index;
+            _currentIndex = 0;
           });
-        },
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.event_note),
-            label: 'Excusals',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: 'Metrics',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _screens,
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: Colors.blue,
+          unselectedItemColor: Colors.grey,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.event_note),
+              label: 'Excusals',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.analytics),
+              label: 'Metrics',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }

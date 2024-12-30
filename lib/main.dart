@@ -1,5 +1,4 @@
-// lib/main.dart
-
+// main.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +17,6 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    print('Firebase Initialized Successfully');
   } catch (e) {
     print('Error Initializing Firebase: $e');
   }
@@ -43,7 +41,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        useMaterial3: true,
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.blue,
@@ -56,11 +53,9 @@ class MyApp extends StatelessWidget {
           if (authProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-
           if (authProvider.user != null) {
             return const MainNavigator();
           }
-
           return const LoginScreen();
         },
       ),
@@ -83,18 +78,6 @@ class _MainNavigatorState extends State<MainNavigator> {
   int _currentIndex = 0;
   bool _isAdmin = false;
 
-  final List<Widget> _adminScreens = [
-    const HomeScreen(),
-    const ExcusalsScreen(),
-    const MetricsScreen(),
-    const ProfileScreen(),
-  ];
-
-  final List<Widget> _studentScreens = [
-    const HomeScreen(),
-    const ProfileScreen(),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -106,52 +89,44 @@ class _MainNavigatorState extends State<MainNavigator> {
     final adminStatus = await authProvider.checkAdminAccess();
     setState(() {
       _isAdmin = adminStatus;
-      // Reset index if current index is not available in student screens
-      if (!_isAdmin && _currentIndex >= _studentScreens.length) {
+      if (!_isAdmin && _currentIndex >= 2) {
         _currentIndex = 0;
       }
     });
   }
 
+  List<Widget> get _screens => _isAdmin
+      ? [
+          const HomeScreen(),
+          const ExcusalsScreen(),
+          const MetricsScreen(),
+          const ProfileScreen(),
+        ]
+      : [
+          const HomeScreen(),
+          const ProfileScreen(),
+        ];
+
+  List<BottomNavigationBarItem> get _navItems => _isAdmin
+      ? const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.event_note), label: 'Excusals'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.analytics), label: 'Metrics'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ]
+      : const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ];
+
   @override
   Widget build(BuildContext context) {
-    final screens = _isAdmin ? _adminScreens : _studentScreens;
-    final navItems = _isAdmin
-        ? const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.event_note),
-              label: 'Excusals',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.analytics),
-              label: 'Metrics',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ]
-        : [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ];
-
     return WillPopScope(
       onWillPop: () async {
         if (_currentIndex != 0) {
-          setState(() {
-            _currentIndex = 0;
-          });
+          setState(() => _currentIndex = 0);
           return false;
         }
         return true;
@@ -159,19 +134,15 @@ class _MainNavigatorState extends State<MainNavigator> {
       child: Scaffold(
         body: IndexedStack(
           index: _currentIndex,
-          children: screens,
+          children: _screens,
         ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
+          onTap: (index) => setState(() => _currentIndex = index),
           type: BottomNavigationBarType.fixed,
           selectedItemColor: Colors.blue,
           unselectedItemColor: Colors.grey,
-          items: navItems,
+          items: _navItems,
         ),
       ),
     );

@@ -1,21 +1,35 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+import '../services/data_service.dart';
+import '../models/menu.dart';
+import '../models/schedule.dart';
+import './admin/menu_manager.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final DataService _dataService = DataService();
+  final AuthService _authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('FalconNet'),
+        title: const Text('Trang chủ'),
         actions: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              '${DateTime.now().hour}:${DateTime.now().minute}',
-              style: const TextStyle(fontSize: 16),
+          if (_authService.currentUser?.email == 'anhduongxx2403@gmail.com')
+            IconButton(
+              icon: const Icon(Icons.admin_panel_settings),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MenuManagerScreen()),
+              ),
             ),
-          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -30,11 +44,61 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 16),
               _buildEventCountdowns(),
               const SizedBox(height: 16),
+              _buildMenu(),
+              const SizedBox(height: 16),
               _buildSchedule(),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMenu() {
+    return StreamBuilder<List<Menu>>(
+      stream: _dataService.getMenus(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Thực đơn hôm nay',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    final menu = snapshot.data![index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            menu.mealType,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(menu.description),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -46,24 +110,24 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Current Pass',
+              'Trạng thái Pass',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text('Discretionary Pass'),
+            const Text('Pass thường'),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
                   onPressed: () {},
-                  child: const Text('Update'),
+                  child: const Text('Cập nhật'),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                   ),
                   onPressed: () {},
-                  child: const Text('Close'),
+                  child: const Text('Đóng'),
                 ),
               ],
             ),
@@ -81,12 +145,12 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: const [
             Text(
-              'Routine Order',
+              'Lệnh thường ngày',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
-            Text('Tuesday, Dec 10'),
-            Text('UOD: OCPs'),
+            Text('Thứ ba, 10/12'),
+            Text('Trang phục: OCPs'),
           ],
         ),
       ),
@@ -102,10 +166,10 @@ class HomeScreen extends StatelessWidget {
       mainAxisSpacing: 8,
       crossAxisSpacing: 8,
       children: [
-        _buildCountdownTile('100s Weekend', '66', Colors.grey),
-        _buildCountdownTile('Ring Dance', '164', Colors.red),
-        _buildCountdownTile('Commitment', '241', Colors.amber),
-        _buildCountdownTile('Graduation', '9999', Colors.blue),
+        _buildCountdownTile('Kỳ nghỉ 100', '66', Colors.grey),
+        _buildCountdownTile('Vũ hội', '164', Colors.red),
+        _buildCountdownTile('Cam kết', '241', Colors.amber),
+        _buildCountdownTile('Tốt nghiệp', '9999', Colors.blue),
       ],
     );
   }
@@ -126,7 +190,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             Text(
-              '$days days',
+              '$days ngày',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -139,35 +203,42 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildSchedule() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Today\'s Schedule',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return StreamBuilder<List<Schedule>>(
+      stream: _dataService.getSchedules(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Lịch trình hôm nay',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    final schedule = snapshot.data![index];
+                    return _buildScheduleItem(
+                      schedule.title,
+                      '${schedule.startTime} - ${schedule.endTime}',
+                      schedule.description,
+                    );
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            _buildScheduleItem(
-              'Breakfast',
-              '01:00 - 03:00',
-              'Biscuits, eggs, breakfast burrito',
-            ),
-            _buildScheduleItem(
-              'Lunch',
-              '03:00 - 06:00',
-              'BBQ beef brisket, sweet potato wedges',
-            ),
-            _buildScheduleItem(
-              'Dinner',
-              '09:00 - 11:50',
-              'Italian pasta night',
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

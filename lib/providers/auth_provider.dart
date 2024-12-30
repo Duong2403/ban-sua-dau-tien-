@@ -1,5 +1,3 @@
-// lib/providers/app_auth_provider.dart
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
@@ -23,6 +21,10 @@ class AppAuthProvider with ChangeNotifier {
     });
   }
 
+  Future<bool> checkAdminAccess() async {
+    return await _authService.isAdmin();
+  }
+
   Future<bool> signInWithGoogle(BuildContext context) async {
     try {
       _isLoading = true;
@@ -32,29 +34,10 @@ class AppAuthProvider with ChangeNotifier {
       _user = result?.user;
       return result != null;
     } catch (e) {
-      print('Error in AppAuthProvider.signInWithGoogle: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign in failed: $e')),
+        SnackBar(content: Text('Đăng nhập thất bại: $e')),
       );
       return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> signOut(BuildContext context) async {
-    try {
-      _isLoading = true;
-      notifyListeners();
-
-      await _authService.signOut();
-      _user = null;
-    } catch (e) {
-      print('Error in AppAuthProvider.signOut: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign out failed: $e')),
-      );
     } finally {
       _isLoading = false;
       notifyListeners();

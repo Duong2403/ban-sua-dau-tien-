@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -7,61 +8,62 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
+// [Phần còn lại giữ nguyên như code trước]
+
 class _ProfileScreenState extends State<ProfileScreen> {
+  final AuthService _authService = AuthService();
   bool isEditing = false;
+  bool isLoading = true;
   final _formKey = GlobalKey<FormState>();
-  
-  // Sample user data
-  final Map<String, String> userData = {
-    'name': 'Brandon Son',
-    'email': 'c26brandon.son@afacademy.af.edu',
-    'phone': '4253244830',
-    'unit': '7',
-    'room': 'Sijan 5B95',
-    'class': '2026',
-    'major': 'Computer Science',
-    'squadron': 'CS-28',
-  };
+  Map<String, dynamic> userData = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final user = _authService.currentUser;
+    if (user != null) {
+      final profile = await _authService.getUserProfile(user.uid);
+      if (profile != null) {
+        setState(() {
+          userData = profile;
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: const Text('Hồ Sơ Cá Nhân'),
         actions: [
           IconButton(
             icon: Icon(isEditing ? Icons.save : Icons.edit),
-            onPressed: () {
-              if (isEditing) {
-                if (_formKey.currentState!.validate()) {
-                  // Save profile changes
-                  setState(() {
-                    isEditing = false;
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profile updated')),
-                  );
-                }
-              } else {
-                setState(() {
-                  isEditing = true;
-                });
-              }
-            },
+            onPressed: () => _handleEditSave(),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildProfileHeader(),
+              _buildPersonalInfo(),
               const SizedBox(height: 24),
-              _buildProfileForm(),
-              const SizedBox(height: 24),
-              _buildAdditionalInfo(),
+              _buildAcademyInfo(),
               const SizedBox(height: 24),
               _buildLogoutButton(),
             ],
@@ -71,127 +73,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileHeader() {
-    return Center(
-      child: Column(
-        children: [
-          const CircleAvatar(
-            radius: 50,
-            backgroundColor: Colors.blue,
-            child: Icon(Icons.person, size: 50, color: Colors.white),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            userData['name']!,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            userData['squadron']!,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileForm() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Personal Information'),
-          const SizedBox(height: 16),
-          _buildTextField('Email', userData['email']!, Icons.email),
-          const SizedBox(height: 16),
-          _buildTextField('Phone', userData['phone']!, Icons.phone),
-          const SizedBox(height: 16),
-          _buildTextField('Major', userData['major']!, Icons.school),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label, String value, IconData icon) {
-    return TextFormField(
-      initialValue: value,
-      enabled: isEditing,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: const OutlineInputBorder(),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter $label';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildAdditionalInfo() {
+  Widget _buildPersonalInfo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Academy Information'),
+        Text(
+          'Thông tin cá nhân',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         const SizedBox(height: 16),
-        _buildInfoCard([
-          {'title': 'Unit', 'value': userData['unit']!},
-          {'title': 'Room', 'value': userData['room']!},
-          {'title': 'Class', 'value': userData['class']!},
-        ]),
+        _buildTextField('name', 'Họ và tên', Icons.person),
+        const SizedBox(height: 12),
+        _buildTextField('phone', 'Số điện thoại', Icons.phone),
+        const SizedBox(height: 12),
+        _buildTextField('email', 'Email', Icons.email, enabled: false),
       ],
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-      ),
+  Widget _buildAcademyInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Thông tin học viện',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField('unit', 'Đơn vị', Icons.business),
+        const SizedBox(height: 12),
+        _buildTextField('room', 'Phòng', Icons.room),
+        const SizedBox(height: 12),
+        _buildTextField('squadron', 'Phi đội', Icons.group),
+        const SizedBox(height: 12),
+        _buildTextField('class', 'Lớp', Icons.school),
+        const SizedBox(height: 12),
+        _buildTextField('major', 'Chuyên ngành', Icons.book),
+      ],
     );
   }
 
-  Widget _buildInfoCard(List<Map<String, String>> items) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: items.map((item) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    item['title']!,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  Text(
-                    item['value']!,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
-        ),
+  Widget _buildTextField(
+    String field,
+    String label,
+    IconData icon, {
+    bool enabled = true,
+  }) {
+    return TextFormField(
+      initialValue: userData[field] ?? '',
+      enabled: enabled && isEditing,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        prefixIcon: Icon(icon),
       ),
+      onChanged: (value) => userData[field] = value,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Vui lòng nhập $label';
+        }
+        return null;
+      },
     );
   }
 
@@ -203,37 +145,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: Colors.red,
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
-        onPressed: () {
-          // Handle logout
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Logout'),
-              content: const Text('Are you sure you want to logout?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                  ),
-                  onPressed: () {
-                    // Handle logout logic
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Logout'),
-                ),
-              ],
-            ),
-          );
-        },
+        onPressed: () => _handleLogout(),
         child: const Text(
-          'Logout',
+          'Đăng xuất',
           style: TextStyle(color: Colors.white),
         ),
       ),
     );
+  }
+
+  Future<void> _handleEditSave() async {
+    if (isEditing) {
+      if (_formKey.currentState!.validate()) {
+        final user = _authService.currentUser;
+        if (user != null) {
+          await _authService.updateProfile(user.uid, userData);
+          setState(() => isEditing = false);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Đã cập nhật hồ sơ')),
+            );
+          }
+        }
+      }
+    } else {
+      setState(() => isEditing = true);
+    }
+  }
+
+  Future<void> _handleLogout() async {
+    await _authService.signOut();
+    if (mounted) {
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
   }
 }

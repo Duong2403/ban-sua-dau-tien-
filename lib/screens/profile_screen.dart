@@ -46,7 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hồ Sơ Cá Nhân'),
+        title: const Text('본인 정보'),
         actions: [
           IconButton(
             icon: Icon(isEditing ? Icons.save : Icons.edit),
@@ -100,15 +100,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 16),
-        _buildTextField('unit', 'Đơn vị', Icons.business),
+        _buildTextField('unit', '중대', Icons.business),
         const SizedBox(height: 12),
-        _buildTextField('room', 'Phòng', Icons.room),
+        _buildTextField('room', '호실', Icons.room),
         const SizedBox(height: 12),
-        _buildTextField('squadron', 'Phi đội', Icons.group),
+        _buildTextField('squadron', '대대', Icons.group),
         const SizedBox(height: 12),
-        _buildTextField('class', 'Lớp', Icons.school),
+        _buildTextField('class', '교번 ', Icons.school),
         const SizedBox(height: 12),
-        _buildTextField('major', 'Chuyên ngành', Icons.book),
+        _buildTextField('major', 'mafor', Icons.book),
       ],
     );
   }

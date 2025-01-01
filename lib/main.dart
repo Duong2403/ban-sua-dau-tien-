@@ -1,4 +1,3 @@
-// main.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +8,8 @@ import 'screens/excusals_screen.dart';
 import 'screens/metrics_screen.dart';
 import 'screens/profile_screen.dart';
 import 'providers/auth_provider.dart';
+import 'screens/pass_input_screen.dart'; // Import màn hình PassInputScreen
+import 'screens/admin_pass_screen.dart'; // Import màn hình AdminPassScreen
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,6 +63,10 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const MainNavigator(),
+        '/pass-input': (context) =>
+            const PassInputScreen(), // Route cho PassInputScreen
+        '/admin-pass': (context) =>
+            const AdminPassScreen(), // Route cho AdminPassScreen
       },
     );
   }
@@ -101,9 +106,12 @@ class _MainNavigatorState extends State<MainNavigator> {
           const ExcusalsScreen(),
           const MetricsScreen(),
           const ProfileScreen(),
+          const AdminPassScreen(), // Thêm màn hình AdminPassScreen
         ]
       : [
           const HomeScreen(),
+          const ExcusalsScreen(),
+          const MetricsScreen(),
           const ProfileScreen(),
         ];
 
@@ -115,9 +123,16 @@ class _MainNavigatorState extends State<MainNavigator> {
           BottomNavigationBarItem(
               icon: Icon(Icons.analytics), label: 'Metrics'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.admin_panel_settings),
+              label: 'Admin'), // Thêm Admin
         ]
       : const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.event_note), label: 'Excusals'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.analytics), label: 'Metrics'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ];
 

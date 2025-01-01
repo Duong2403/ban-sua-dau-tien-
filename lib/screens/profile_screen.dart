@@ -106,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 12),
         _buildTextField('squadron', '대대', Icons.group),
         const SizedBox(height: 12),
-        _buildTextField('class', '교번 ', Icons.school),
+        _buildTextField('studentId', '교번 ', Icons.school),
         const SizedBox(height: 12),
         _buildTextField('major', 'mafor', Icons.book),
       ],

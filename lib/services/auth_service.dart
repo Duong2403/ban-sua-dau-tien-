@@ -57,7 +57,7 @@ class AuthService {
         'unit': '',
         'room': '',
         'squadron': '',
-        'class': '',
+        'studentId': '',
         'major': '',
         'lastLogin': FieldValue.serverTimestamp(),
       };

@@ -1,5 +1,3 @@
-// lib/services/grade_service.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/grade.dart';
@@ -8,41 +6,56 @@ class GradeService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // CRUD Operations for Grades
+  // Thêm điểm mới
   Future<void> addGrade(Grade grade) async {
     try {
       if (!await isAdmin()) {
-        throw Exception('권한이 없습니다');
+        throw Exception('Bạn không có quyền thực hiện thao tác này.');
       }
+
+      // Kiểm tra sự tồn tại của studentId trong collection 'users'
+      final userDocs = await _firestore
+          .collection('users')
+          .where('studentId', isEqualTo: grade.studentId)
+          .get();
+
+      if (userDocs.docs.isEmpty) {
+        throw Exception('Mã số học viên không tồn tại: ${grade.studentId}');
+      }
+
       await _firestore.collection('grades').add(grade.toMap());
     } catch (e) {
-      throw Exception('성적 추가 실패: $e');
+      throw Exception('Không thể thêm điểm: $e');
     }
   }
 
+  // Cập nhật điểm
   Future<void> updateGrade(String id, Grade grade) async {
     try {
       if (!await isAdmin()) {
-        throw Exception('권한이 없습니다');
+        throw Exception('Bạn không có quyền thực hiện thao tác này.');
       }
+
       await _firestore.collection('grades').doc(id).update(grade.toMap());
     } catch (e) {
-      throw Exception('성적 업데이트 실패: $e');
+      throw Exception('Không thể cập nhật điểm: $e');
     }
   }
 
+  // Xóa điểm
   Future<void> deleteGrade(String id) async {
     try {
       if (!await isAdmin()) {
-        throw Exception('권한이 없습니다');
+        throw Exception('Bạn không có quyền thực hiện thao tác này.');
       }
+
       await _firestore.collection('grades').doc(id).delete();
     } catch (e) {
-      throw Exception('성적 삭제 실패: $e');
+      throw Exception('Không thể xóa điểm: $e');
     }
   }
 
-  // Read Grade methods
+  // Lấy danh sách điểm theo studentId
   Stream<List<Grade>> getGradesByStudentId(String studentId) {
     try {
       return _firestore
@@ -51,14 +64,14 @@ class GradeService {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .map((snapshot) => snapshot.docs
-              .map((doc) => Grade.fromFirestore(
-                  doc.data() as Map<String, dynamic>, doc.id))
+              .map((doc) => Grade.fromFirestore(doc.data(), doc.id))
               .toList());
     } catch (e) {
-      throw Exception('성적 조회 실패: $e');
+      throw Exception('Không thể lấy danh sách điểm: $e');
     }
   }
 
+  // Lấy danh sách tất cả điểm
   Stream<List<Grade>> getAllGrades() {
     try {
       return _firestore
@@ -66,15 +79,14 @@ class GradeService {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .map((snapshot) => snapshot.docs
-              .map((doc) => Grade.fromFirestore(
-                  doc.data() as Map<String, dynamic>, doc.id))
+              .map((doc) => Grade.fromFirestore(doc.data(), doc.id))
               .toList());
     } catch (e) {
-      throw Exception('전체 성적 조회 실패: $e');
+      throw Exception('Không thể lấy danh sách tất cả điểm: $e');
     }
   }
 
-  // Grade Statistics methods
+  // Lấy thống kê điểm
   Future<Map<String, double>> getGradeStatistics(String studentId) async {
     try {
       final grades = await _firestore
@@ -106,11 +118,11 @@ class GradeService {
         'lowest': allGrades.first,
       };
     } catch (e) {
-      throw Exception('성적 통계 계산 실패: $e');
+      throw Exception('Không thể tính toán thống kê điểm: $e');
     }
   }
 
-  // Search and Filter methods
+  // Tìm kiếm điểm
   Future<List<Grade>> searchGrades({
     String? subject,
     String? studentId,
@@ -144,61 +156,52 @@ class GradeService {
               Grade.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
     } catch (e) {
-      throw Exception('성적 검색 실패: $e');
+      throw Exception('Không thể tìm kiếm điểm: $e');
     }
   }
 
-  // Export methods
+  // Xuất danh sách điểm ra CSV
   Future<String> exportGradesToCSV() async {
     try {
       if (!await isAdmin()) {
-        throw Exception('권한이 없습니다');
+        throw Exception('Bạn không có quyền thực hiện thao tác này.');
       }
 
       final grades = await _firestore.collection('grades').get();
 
-      // CSV Header
-      String csvContent = '과목,과목코드,수시,중간,기말,교번,생성일자\n';
+      // Header CSV
+      String csvContent =
+          'Môn học,Mã môn học,Thường xuyên,Giữa kỳ,Cuối kỳ,Mã học viên,Ngày tạo\n';
 
-      // Add each grade record
+      // Thêm từng bản ghi
       for (var doc in grades.docs) {
         final data = doc.data();
         csvContent += '${data['subject']},${data['subjectCode']},'
             '${data['regularGrade']},${data['midtermGrade']},'
             '${data['finalGrade']},${data['studentId']},'
-            '${(data['createdAt'] as Timestamp).toDate().toString()}\n';
+            '${(data['createdAt'] as Timestamp).toDate()}\n';
       }
 
       return csvContent;
     } catch (e) {
-      throw Exception('성적 내보내기 실패: $e');
+      throw Exception('Không thể xuất danh sách điểm: $e');
     }
   }
 
-  // Authorization method
+  // Kiểm tra quyền admin
   Future<bool> isAdmin() async {
     final user = _auth.currentUser;
     if (user == null) return false;
 
     try {
-      return user.email == 'anhduongxx2403@gmail.com';
+      return user.email ==
+          'anhduongxx2403@gmail.com'; // Đổi thành email admin thực tế
     } catch (e) {
       return false;
     }
   }
 
-  // Get Single Grade
-  Future<Grade?> getGrade(String id) async {
-    try {
-      final doc = await _firestore.collection('grades').doc(id).get();
-      if (!doc.exists) return null;
-      return Grade.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
-    } catch (e) {
-      throw Exception('성적 조회 실패: $e');
-    }
-  }
-
-  // Get Latest Grades
+  // Lấy điểm mới nhất
   Stream<List<Grade>> getLatestGrades(int limit) {
     try {
       return _firestore
@@ -211,7 +214,7 @@ class GradeService {
                   doc.data() as Map<String, dynamic>, doc.id))
               .toList());
     } catch (e) {
-      throw Exception('최근 성적 조회 실패: $e');
+      throw Exception('Không thể lấy danh sách điểm mới nhất: $e');
     }
   }
 }

@@ -1,8 +1,6 @@
-// lib/screens/performance/student_performance_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/performance_service.dart';
-import '../../services/user_profile_service.dart';
 import '../../models/performance.dart';
 import '../../providers/auth_provider.dart';
 
@@ -16,53 +14,45 @@ class StudentPerformanceScreen extends StatefulWidget {
 
 class _StudentPerformanceScreenState extends State<StudentPerformanceScreen> {
   final PerformanceService _performanceService = PerformanceService();
-  final UserProfileService _userProfileService = UserProfileService();
   final _formKey = GlobalKey<FormState>();
 
   int _year = DateTime.now().year;
   int _semester = 1;
-  String _grade = '';
-  String _unit = '';
-  String _name = '';
   int _pushUps = 0;
   int _sitUps = 0;
   double _running = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserProfile();
-  }
-
-  Future<void> _loadUserProfile() async {
-    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-    final userProfile =
-        await _userProfileService.getUserProfile(authProvider.user?.uid ?? '');
-    if (userProfile != null) {
-      setState(() {
-        _grade = userProfile['grade'] ?? '';
-        _unit = userProfile['unit'] ?? '';
-        _name = userProfile['name'] ?? '';
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AppAuthProvider>(context);
     final studentId = authProvider.user?.email ?? '';
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildPerformanceForm(studentId),
-          const SizedBox(height: 20),
-          _buildPerformanceHistory(studentId),
-          const SizedBox(height: 20),
-          _buildPerformanceChart(studentId),
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Performance Tracker'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildPerformanceForm(studentId),
+            const SizedBox(height: 20),
+            const Text(
+              'Performance History',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            _buildPerformanceHistory(studentId),
+            const SizedBox(height: 20),
+            const Text(
+              'Yearly Performance Comparison',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            _buildPerformanceComparison(studentId),
+          ],
+        ),
       ),
     );
   }
@@ -81,7 +71,7 @@ class _StudentPerformanceScreenState extends State<StudentPerformanceScreen> {
                     child: DropdownButtonFormField<int>(
                       value: _year,
                       decoration: const InputDecoration(
-                        labelText: '년 (Year)',
+                        labelText: 'Year',
                         border: OutlineInputBorder(),
                       ),
                       items: List.generate(5, (index) {
@@ -99,7 +89,7 @@ class _StudentPerformanceScreenState extends State<StudentPerformanceScreen> {
                     child: DropdownButtonFormField<int>(
                       value: _semester,
                       decoration: const InputDecoration(
-                        labelText: '학기 (Semester)',
+                        labelText: 'Semester',
                         border: OutlineInputBorder(),
                       ),
                       items: const [
@@ -118,12 +108,12 @@ class _StudentPerformanceScreenState extends State<StudentPerformanceScreen> {
                     child: TextFormField(
                       initialValue: _pushUps.toString(),
                       decoration: const InputDecoration(
-                        labelText: '팔굽혀펴기 (Push-ups)',
+                        labelText: 'Push Ups',
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) =>
-                          value?.isEmpty ?? true ? '푸시업 횟수를 입력하세요' : null,
+                          value?.isEmpty ?? true ? 'Enter Push Ups' : null,
                       onSaved: (value) =>
                           _pushUps = int.tryParse(value ?? '0') ?? 0,
                     ),
@@ -133,12 +123,12 @@ class _StudentPerformanceScreenState extends State<StudentPerformanceScreen> {
                     child: TextFormField(
                       initialValue: _sitUps.toString(),
                       decoration: const InputDecoration(
-                        labelText: '윗몸일으키기 (Sit-ups)',
+                        labelText: 'Sit Ups',
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) =>
-                          value?.isEmpty ?? true ? '싯업 횟수를 입력하세요' : null,
+                          value?.isEmpty ?? true ? 'Enter Sit Ups' : null,
                       onSaved: (value) =>
                           _sitUps = int.tryParse(value ?? '0') ?? 0,
                     ),
@@ -149,12 +139,12 @@ class _StudentPerformanceScreenState extends State<StudentPerformanceScreen> {
               TextFormField(
                 initialValue: _running.toString(),
                 decoration: const InputDecoration(
-                  labelText: '달리기 (Running time in minutes)',
+                  labelText: 'Running Time (minutes)',
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) =>
-                    value?.isEmpty ?? true ? '달리기 시간을 입력하세요' : null,
+                    value?.isEmpty ?? true ? 'Enter Running Time' : null,
                 onSaved: (value) =>
                     _running = double.tryParse(value ?? '0') ?? 0,
               ),
@@ -164,7 +154,7 @@ class _StudentPerformanceScreenState extends State<StudentPerformanceScreen> {
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text('기록 입력 (Submit Performance)'),
+                child: const Text('Submit Performance'),
               ),
             ],
           ),
@@ -178,7 +168,12 @@ class _StudentPerformanceScreenState extends State<StudentPerformanceScreen> {
       stream: _performanceService.getPerformancesByStudentId(studentId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const Text('Error loading performance data');
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text('Error: ${snapshot.error}'),
+            ),
+          );
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -188,33 +183,41 @@ class _StudentPerformanceScreenState extends State<StudentPerformanceScreen> {
         final performances = snapshot.data ?? [];
 
         if (performances.isEmpty) {
-          return const Center(
-            child: Text('아직 입력된 기록이 없습니다'),
+          return const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(
+                child: Text('No performance records available'),
+              ),
+            ),
           );
         }
 
         return Card(
+          elevation: 2,
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: DataTable(
               columns: const [
-                DataColumn(label: Text('년')),
-                DataColumn(label: Text('학기')),
-                DataColumn(label: Text('팔굽혀펴기')),
-                DataColumn(label: Text('윗몸일으키기')),
-                DataColumn(label: Text('달리기')),
+                DataColumn(label: Text('Year')),
+                DataColumn(label: Text('Semester')),
+                DataColumn(label: Text('Push Ups')),
+                DataColumn(label: Text('Sit Ups')),
+                DataColumn(label: Text('Running (min)')),
+                DataColumn(label: Text('Date')),
               ],
-              rows: performances
-                  .map((performance) => DataRow(
-                        cells: [
-                          DataCell(Text(performance.year.toString())),
-                          DataCell(Text(performance.semester.toString())),
-                          DataCell(Text(performance.pushUps.toString())),
-                          DataCell(Text(performance.sitUps.toString())),
-                          DataCell(Text('${performance.running} min')),
-                        ],
-                      ))
-                  .toList(),
+              rows: performances.map((performance) {
+                return DataRow(
+                  cells: [
+                    DataCell(Text(performance.year.toString())),
+                    DataCell(Text(performance.semester.toString())),
+                    DataCell(Text(performance.pushUps.toString())),
+                    DataCell(Text(performance.sitUps.toString())),
+                    DataCell(Text(performance.running.toStringAsFixed(2))),
+                    DataCell(Text(_formatDate(performance.createdAt))),
+                  ],
+                );
+              }).toList(),
             ),
           ),
         );
@@ -222,12 +225,68 @@ class _StudentPerformanceScreenState extends State<StudentPerformanceScreen> {
     );
   }
 
-  Widget _buildPerformanceChart(String studentId) {
-    // Will implement chart visualization in the next part
-    return Container();
-  }
+  Widget _buildPerformanceComparison(String studentId) {
+    return StreamBuilder<List<Performance>>(
+      stream: _performanceService.getPerformancesByStudentId(studentId),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text('Error: ${snapshot.error}'),
+            ),
+          );
+        }
 
-  // lib/screens/performance/student_performance_screen.dart
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final performances = snapshot.data ?? [];
+
+        if (performances.isEmpty) {
+          return const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(
+                child: Text('No comparison data available'),
+              ),
+            ),
+          );
+        }
+
+        final years = performances.map((p) => p.year).toSet().toList()..sort();
+
+        return Card(
+          child: Column(
+            children: years.map((year) {
+              final yearlyPerformances =
+                  performances.where((p) => p.year == year).toList();
+              final averagePushUps = yearlyPerformances
+                      .map((p) => p.pushUps)
+                      .reduce((a, b) => a + b) /
+                  yearlyPerformances.length;
+              final averageSitUps = yearlyPerformances
+                      .map((p) => p.sitUps)
+                      .reduce((a, b) => a + b) /
+                  yearlyPerformances.length;
+              final averageRunning = yearlyPerformances
+                      .map((p) => p.running)
+                      .reduce((a, b) => a + b) /
+                  yearlyPerformances.length;
+
+              return ListTile(
+                title: Text('Year: $year'),
+                subtitle: Text(
+                  'Average Push Ups: ${averagePushUps.toStringAsFixed(2)}, Average Sit Ups: ${averageSitUps.toStringAsFixed(2)}, Average Running: ${averageRunning.toStringAsFixed(2)} min',
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
 
   Future<void> _submitPerformance(String studentId) async {
     if (_formKey.currentState?.validate() ?? false) {
@@ -238,21 +297,27 @@ class _StudentPerformanceScreenState extends State<StudentPerformanceScreen> {
         year: _year,
         semester: _semester,
         studentId: studentId,
-        grade: _grade,
-        unit: _unit,
-        name: _name,
         pushUps: _pushUps,
         sitUps: _sitUps,
         running: _running,
         createdAt: DateTime.now(),
+        unit: '',
+        grade: '',
+        name: '',
       );
 
       try {
         await _performanceService.addPerformance(performance);
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('기록이 성공적으로 저장되었습니다')),
+            const SnackBar(content: Text('Performance saved successfully')),
           );
+          setState(() {
+            _pushUps = 0;
+            _sitUps = 0;
+            _running = 0.0;
+          });
           _formKey.currentState?.reset();
         }
       } catch (e) {
@@ -263,5 +328,9 @@ class _StudentPerformanceScreenState extends State<StudentPerformanceScreen> {
         }
       }
     }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }

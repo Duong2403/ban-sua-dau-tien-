@@ -532,6 +532,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildScheduleItem(String title, String time, String description) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
